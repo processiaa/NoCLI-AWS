@@ -1,0 +1,117 @@
+{
+  "name": "nocli-aws",
+  "version": "1.0.0",
+  "description": "Open-source desktop GUI for managing AWS S3 and Amazon ECR with temporary STS credentials without AWS CLI or browser console access",
+  "license": "MIT",
+  "main": "./out/main/index.js",
+  "author": "NoCLI-AWS Contributors",
+  "homepage": "https://github.com/processiaa/NoCLI-AWS#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/processiaa/NoCLI-AWS.git"
+  },
+  "bugs": {
+    "url": "https://github.com/processiaa/NoCLI-AWS/issues"
+  },
+  "keywords": [
+    "aws",
+    "s3",
+    "ecr",
+    "docker",
+    "sts",
+    "electron",
+    "desktop",
+    "gui",
+    "no-cli",
+    "devops"
+  ],
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "build:unpack": "npm run build && electron-builder --dir",
+    "win": "npm run build && electron-builder --win",
+    "mac": "npm run build && electron-builder --mac",
+    "linux": "npm run build && electron-builder --linux"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ecr": "^3.705.0",
+    "@aws-sdk/client-s3": "^3.705.0",
+    "@aws-sdk/client-sts": "^3.705.0",
+    "@aws-sdk/lib-storage": "^3.705.0",
+    "@aws-sdk/s3-request-presigner": "^3.705.0",
+    "@electron-toolkit/preload": "^3.0.1",
+    "@electron-toolkit/utils": "^3.0.0",
+    "dockerode": "^4.0.2",
+    "lucide-react": "^0.462.0"
+  },
+  "devDependencies": {
+    "@types/dockerode": "^3.3.31",
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "postcss": "^8.4.49",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  },
+  "build": {
+    "appId": "com.nocliaws.desktop",
+    "productName": "NoCLI AWS",
+    "directories": {
+      "buildResources": "resources",
+      "output": "dist"
+    },
+    "files": [
+      "!**/.vscode/*",
+      "!src/*",
+      "!electron.vite.config.{js,ts,mjs,cjs}",
+      "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md,README.es.md,CONTRIBUTING.md,SECURITY.md,CODE_OF_CONDUCT.md}",
+      "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
+    ],
+    "win": {
+      "executableName": "NoCLI-AWS",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "category": "Development",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}
