@@ -1,6 +1,6 @@
 {
   "name": "nocli-aws",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Open-source desktop GUI for managing AWS S3 and Amazon ECR with temporary STS credentials without AWS CLI or browser console access",
   "license": "MIT",
   "main": "./out/main/index.js",
@@ -89,6 +89,11 @@
           ]
         }
       ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "include": "resources/installer.nsh"
     },
     "mac": {
       "category": "public.app-category.developer-tools",

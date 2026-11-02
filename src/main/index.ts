@@ -15,6 +15,16 @@ import type {
 
 let mainWindow: BrowserWindow | null = null
 
+// Evitar fallos 0xC0000135 (STATUS_DLL_NOT_FOUND) en el subproceso GPU de Chromium en Windows
+// cuando la app se instala por usuario en AppData\Local\Programs con ACLs restringidas o EDR corporativo
+if (process.platform === 'win32') {
+  app.commandLine.appendSwitch('no-gpu-sandbox')
+}
+
+if (process.env.NOCLI_DISABLE_GPU === '1') {
+  app.disableHardwareAcceleration()
+}
+
 function sendTransferProgress(event: TransferProgressEvent): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('transfer:progress', event)
@@ -533,20 +543,37 @@ function registerIpcHandlers(): void {
   )
 }
 
-app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.nocliaws.desktop')
+// Garantizar una unica instancia para evitar bloqueos de cache (Access is denied 0x5 en GPUCache/Cache)
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
 
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
+if (!gotSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore()
+      }
+      mainWindow.show()
+      mainWindow.focus()
+    }
   })
 
-  registerIpcHandlers()
-  createWindow()
+  app.whenReady().then(() => {
+    electronApp.setAppUserModelId('com.nocliaws.desktop')
 
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    app.on('browser-window-created', (_, window) => {
+      optimizer.watchWindowShortcuts(window)
+    })
+
+    registerIpcHandlers()
+    createWindow()
+
+    app.on('activate', function () {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
   })
-})
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
