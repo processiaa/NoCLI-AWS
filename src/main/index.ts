@@ -14,11 +14,34 @@ import type {
 } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
+let isRelaunchingWithFallback = false
 
-// Evitar fallos 0xC0000135 (STATUS_DLL_NOT_FOUND) en el subproceso GPU de Chromium en Windows
-// cuando la app se instala por usuario en AppData\Local\Programs con ACLs restringidas o EDR corporativo
+// Desactivar el sandbox del subproceso GPU en Windows usando los switches reales de Chromium
+// ('no-sandbox' y 'disable-gpu-sandbox', igual que VS Code / Antigravity) para evitar el error
+// 0xC0000135 (-1073741515 STATUS_DLL_NOT_FOUND) en instalaciones por usuario bajo AppData\Local\Programs
+// o cuando se lanza desde terminales restringidas, VMware, RDP o entornos corporativos con EDR.
 if (process.platform === 'win32') {
-  app.commandLine.appendSwitch('no-gpu-sandbox')
+  app.commandLine.appendSwitch('no-sandbox')
+  app.commandLine.appendSwitch('disable-gpu-sandbox')
+
+  // Respaldo adicional: si el driver de GPU fisico falla aun sin sandbox, relanzar en modo software
+  if (!app.commandLine.hasSwitch('disable-gpu')) {
+    app.on('child-process-gone', (_event, details) => {
+      if (
+        !isRelaunchingWithFallback &&
+        details.type === 'GPU' &&
+        (details.reason === 'crashed' ||
+          details.reason === 'launch-failed' ||
+          details.exitCode === -1073741515)
+      ) {
+        isRelaunchingWithFallback = true
+        app.relaunch({
+          args: [...process.argv.slice(1), '--no-sandbox', '--disable-gpu-sandbox', '--disable-gpu']
+        })
+        app.exit(0)
+      }
+    })
+  }
 }
 
 if (process.env.NOCLI_DISABLE_GPU === '1') {
@@ -51,6 +74,14 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
+  })
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+        mainWindow.show()
+      }
+    }, 800)
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
